@@ -1,1 +1,2 @@
 # Firebase_test
+flutterでFirebaseを利用するためのテスト用リポジトリ
