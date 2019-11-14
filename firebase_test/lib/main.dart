@@ -1,71 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-void main() => runApp(MyHomePage());
+void main() => runApp(MyApp());
 
-class MyHomePage extends StatefulWidget {
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  var count = 1;
-
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Firestore Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+      title: '貸し借りメモ',
+      home: List(),
+    );
+  }
+}
+
+class List extends StatefulWidget {
+  @override
+  _MyList createState() => _MyList();
+}
+
+class _MyList extends State<List> {
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("リスト画面"),
       ),
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text('Flutter Firestore Demo'),
-        ),
-        body: createListView(),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            // Firestore 上にデータを追加
-            Firestore.instance.collection('books').add({
-              'title': 'タイトル$count',
-              'author': '著者$count',
-            });
-            count += 1;
-          },
-          child: Icon(Icons.add),
-        ),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: StreamBuilder<QuerySnapshot>(
+            stream: Firestore.instance.collection('borrow_info').snapshots(),
+            builder:
+                (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+              if (!snapshot.hasData) return const Text('Loading...');//データローディング時
+              return ListView.builder(
+                itemCount: snapshot.data.documents.length,
+                padding: const EdgeInsets.only(top: 10.0),
+                itemBuilder: (context, index) =>
+                    _buildListItem(context, snapshot.data.documents[index]),
+              );
+            }),
       ),
     );
   }
 
-  createListView() {
-    Firestore.instance.collection('books').snapshots().listen((data) {
-      print(data);
-    });
-
-    return StreamBuilder(
-      stream: Firestore.instance.collection('books').snapshots(),
-      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-        // エラーの場合
-        if (snapshot.hasError) {
-          return Text('Error: ${snapshot.error}');
-        }
-
-        // 通信中の場合
-        switch (snapshot.connectionState) {
-          case ConnectionState.waiting:
-            return Text('Loading ...');
-          default:
-            return ListView(
-              children: snapshot.data.documents.map((DocumentSnapshot document) {
-                return new ListTile(
-                  title: new Text(document['title']),
-                  subtitle: new Text(document['author']),
-                );
-              }).toList(),
-            );
-        }
-      },
+  Widget _buildListItem(BuildContext context, DocumentSnapshot document) {
+    return Card(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          ListTile(
+            leading: const Icon(Icons.android),
+            title: Text("【 " +
+                (document['info'] == "lend" ? "貸" : "借") +
+                " 】" +
+                document['staff']),
+            subtitle: Text('期限 ： ' + document["date"].toString()/*.substring(0, 10)*/ +
+                " \n相手 ： " + document['user']),
+          ),
+        ],
+      ),
     );
   }
 }
