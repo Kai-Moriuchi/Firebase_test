@@ -13,6 +13,101 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class InputForm extends StatefulWidget{
+  @override
+  _MyInputFormState createState() => _MyInputFormState();
+}
+
+class _FormData{
+  String info = "borrow";
+  String user;
+  String stuff;
+  DateTime date = DateTime.now();
+}
+
+class _MyInputFormState extends State<InputForm>{
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final _FormData _data = _FormData();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("貸借り入力"),
+        actions: <Widget>[
+          IconButton(
+              icon: Icon(Icons.save),
+              onPressed: () {
+                print("保存完了");
+              }
+          ),
+          IconButton(
+              icon: Icon(Icons.delete),
+              onPressed: () {
+                print("削除完了");
+              }
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child:
+        Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.all(20.0),
+              children: <Widget>[
+                RadioListTile(
+                    value: "borrow",
+                    groupValue: _data.info,
+                    title: Text("借りた"),
+                    onChanged: (String value) {
+                      print("借りたをタッチ");
+                    }
+                ),
+                RadioListTile(
+                    value: "lend",
+                    groupValue: _data.info,
+                    title: Text("貸した"),
+                    onChanged: (String value) {
+                      print("貸したをタッチ");
+                    }
+                ),
+
+                TextFormField(
+                  decoration: const InputDecoration(
+                    icon: const Icon(Icons.person),
+                    hintText: '相手の名前',
+                    labelText: 'Name',
+                  ),
+                  ),
+
+                TextFormField(
+                  decoration: const InputDecoration(
+                    icon: const Icon(Icons.business_center),
+                    hintText: '借りたもの、貸したもの',
+                    labelText: 'Ioan',
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                      child: Text("締め切り日：${_data.date.toString().substring(0,10)}"),
+                ),
+
+                RaisedButton(
+                  child: const Text("締め切り日変更"),
+                    onPressed: (){
+                      print("締め切り日変更をタッチ");
+                    },
+                    ),
+                ],
+              )
+          ),
+      ),
+    );
+  }
+}
+
 class List extends StatefulWidget {
   @override
   _MyList createState() => _MyList();
@@ -24,27 +119,28 @@ class _MyList extends State<List> {
       appBar: AppBar(
         title: const Text("リスト画面"),
       ),
-      body: _getData(),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: StreamBuilder<QuerySnapshot>( //Cloud Firestoreからデータを取得し、表示させる
+            stream: Firestore.instance.collection('borrow_info').snapshots(), //非同期で所得できるデータ
+            builder: //streamに変化が会った時に呼び出される
+                (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+              if (!snapshot.hasData) return const Text('Loading...');//データローディング時
+              return ListView.builder(
+                itemCount: snapshot.data.documents.length,
+                padding: const EdgeInsets.only(top: 10.0),
+                itemBuilder: (context, index) =>
+                    _buildListItem(context, snapshot.data.documents[index]),
+              );
+            }),
+      ),
+      floatingActionButton: FloatingActionButton(
+          child: const Icon(Icons.add),
+          onPressed: () {
+            print("新規作成ボタンを押しました");
+          }
+      ),
     );
-  }
-
-  Widget _getData(){
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: StreamBuilder<QuerySnapshot>( //Cloud Firestoreからデータを取得し、表示させる
-          stream: Firestore.instance.collection('borrow_info').snapshots(), //非同期で所得できるデータ
-          builder: //streamに変化が会った時に呼び出される
-              (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-            if (!snapshot.hasData) return const Text('Loading...');//データローディング時
-            return ListView.builder(
-              itemCount: snapshot.data.documents.length,
-              padding: const EdgeInsets.only(top: 10.0),
-              itemBuilder: (context, index) =>
-                  _buildListItem(context, snapshot.data.documents[index]),
-            );
-          }),
-    );
-
   }
 
   Widget _buildListItem(BuildContext context, DocumentSnapshot document) {
@@ -61,6 +157,18 @@ class _MyList extends State<List> {
             subtitle: Text('期限 ： ' + document["date"].toString()/*.substring(0, 10)*/ +
                 //DateTime.fromMillisecondsSinceEpoch(document['date']).toString() + TimeStampからDateTimeへの変換
                 " \n相手 ： " + document['user']),
+          ),
+          ButtonTheme.bar(
+            child: ButtonBar(
+              children: <Widget>[
+                FlatButton(
+                  child: const Text("編集"),
+                  onPressed: () {
+                    print("編集ボタンを押しました");
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),
