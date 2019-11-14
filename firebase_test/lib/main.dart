@@ -18,6 +18,7 @@ class InputForm extends StatefulWidget{
   _MyInputFormState createState() => _MyInputFormState();
 }
 
+//入力する変数を管理
 class _FormData{
   String info = "borrow";
   String user;
@@ -33,8 +34,9 @@ class _MyInputFormState extends State<InputForm>{
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("貸借り入力"),
+        title: Text("貸し借り入力"),
         actions: <Widget>[
+          //保存、削除ボタンを表示
           IconButton(
               icon: Icon(Icons.save),
               onPressed: () {
@@ -51,11 +53,13 @@ class _MyInputFormState extends State<InputForm>{
       ),
       body: SafeArea(
         child:
+        //データ入力の作成
         Form(
-            key: _formKey,
+            key: _formKey,//フォーム全体に対する制御を行う。入力チェックに利用
             child: ListView(
               padding: const EdgeInsets.all(20.0),
               children: <Widget>[
+                //ラジオボタンの作成（丸いやつ◉　◎　こんなの）
                 RadioListTile(
                     value: "borrow",
                     groupValue: _data.info,
@@ -72,7 +76,7 @@ class _MyInputFormState extends State<InputForm>{
                       print("貸したをタッチ");
                     }
                 ),
-
+                //テキストの入力フィールド
                 TextFormField(
                   decoration: const InputDecoration(
                     icon: const Icon(Icons.person),
@@ -117,7 +121,7 @@ class _MyList extends State<List> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("リスト画面"),
+        title: const Text("リスト"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -138,6 +142,13 @@ class _MyList extends State<List> {
           child: const Icon(Icons.add),
           onPressed: () {
             print("新規作成ボタンを押しました");
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  settings: const RouteSettings(name: "/new"),
+                  builder: (BuildContext context) => InputForm()
+              ),
+            );
           }
       ),
     );
