@@ -24,22 +24,27 @@ class _MyList extends State<List> {
       appBar: AppBar(
         title: const Text("リスト画面"),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: StreamBuilder<QuerySnapshot>(
-            stream: Firestore.instance.collection('borrow_info').snapshots(),
-            builder:
-                (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-              if (!snapshot.hasData) return const Text('Loading...');//データローディング時
-              return ListView.builder(
-                itemCount: snapshot.data.documents.length,
-                padding: const EdgeInsets.only(top: 10.0),
-                itemBuilder: (context, index) =>
-                    _buildListItem(context, snapshot.data.documents[index]),
-              );
-            }),
-      ),
+      body: _getData(),
     );
+  }
+
+  Widget _getData(){
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: StreamBuilder<QuerySnapshot>( //Cloud Firestoreからデータを取得し、表示させる
+          stream: Firestore.instance.collection('borrow_info').snapshots(), //非同期で所得できるデータ
+          builder: //streamに変化が会った時に呼び出される
+              (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+            if (!snapshot.hasData) return const Text('Loading...');//データローディング時
+            return ListView.builder(
+              itemCount: snapshot.data.documents.length,
+              padding: const EdgeInsets.only(top: 10.0),
+              itemBuilder: (context, index) =>
+                  _buildListItem(context, snapshot.data.documents[index]),
+            );
+          }),
+    );
+
   }
 
   Widget _buildListItem(BuildContext context, DocumentSnapshot document) {
@@ -54,6 +59,7 @@ class _MyList extends State<List> {
                 " 】" +
                 document['staff']),
             subtitle: Text('期限 ： ' + document["date"].toString()/*.substring(0, 10)*/ +
+                //DateTime.fromMillisecondsSinceEpoch(document['date']).toString() + TimeStampからDateTimeへの変換
                 " \n相手 ： " + document['user']),
           ),
         ],
