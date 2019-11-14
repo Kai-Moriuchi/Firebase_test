@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';//非同期処理のため
 
 void main() => runApp(MyApp());
 
@@ -13,13 +14,13 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class InputForm extends StatefulWidget{
+class InputForm extends StatefulWidget {
   @override
   _MyInputFormState createState() => _MyInputFormState();
 }
 
 //入力する変数を管理
-class _FormData{
+class _FormData {
   String info = "borrow";
   String user;
   String stuff;
@@ -27,8 +28,26 @@ class _FormData{
 }
 
 class _MyInputFormState extends State<InputForm>{
+
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final _FormData _data = _FormData();
+
+  //非同期処理
+  Future<DateTime> _selectTime(BuildContext context){
+    return showDatePicker(
+        context: context,
+        initialDate: _data.date,//初期の日付
+        firstDate: DateTime(_data.date.year - 2),//2年前
+        lastDate: DateTime(_data.date.year + 2)//2年後
+    );
+  }
+
+  //貸した、借りた情報をセットする
+  void _setLendOrRent(String value){
+    setState(() {
+      _data.info = value;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +85,7 @@ class _MyInputFormState extends State<InputForm>{
                     title: Text("借りた"),
                     onChanged: (String value) {
                       print("借りたをタッチ");
+                      _setLendOrRent(value);
                     }
                 ),
                 RadioListTile(
@@ -74,6 +94,7 @@ class _MyInputFormState extends State<InputForm>{
                     title: Text("貸した"),
                     onChanged: (String value) {
                       print("貸したをタッチ");
+                      _setLendOrRent(value);
                     }
                 ),
                 //テキストの入力フィールド
@@ -102,6 +123,13 @@ class _MyInputFormState extends State<InputForm>{
                   child: const Text("締め切り日変更"),
                     onPressed: (){
                       print("締め切り日変更をタッチ");
+                      _selectTime(context).then((time){
+                        if (time != null && time != _data.date){
+                          setState(() {
+                            _data.date = time;
+                          });
+                        }
+                      });
                     },
                     ),
                 ],
