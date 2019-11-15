@@ -21,7 +21,7 @@ dependencies:
     sdk: flutter
   #cloud_firestore: ^0.9.13
   cloud_firestore: ^0.12.10
-  #firebase_core: ^0.2.5       # This dependency was added during initial configuration.
+  firebase_core: ^0.4.1       # This dependency was added during initial configuration.
   #firebase_analytics: ^1.0.4  # add dependency for Google Analytics for Firebase
 
   # The following adds the Cupertino Icons font to your application.

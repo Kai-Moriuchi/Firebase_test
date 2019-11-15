@@ -15,6 +15,10 @@ class MyApp extends StatelessWidget {
 }
 
 class InputForm extends StatefulWidget {
+  //引数を追加
+  InputForm(this.document);
+  final DocumentSnapshot document;
+
   @override
   _MyInputFormState createState() => _MyInputFormState();
 }
@@ -25,6 +29,11 @@ class _FormData {
   String user;
   String stuff;
   DateTime date = DateTime.now();
+  DateTime BASE_DAY = DateTime(1970, 1, 1);
+
+  int firebaseSeconds() {
+    return BASE_DAY.difference(date).inSeconds;
+  }
 }
 
 class _MyInputFormState extends State<InputForm>{
@@ -51,8 +60,23 @@ class _MyInputFormState extends State<InputForm>{
 
   @override
   Widget build(BuildContext context) {
+    //編集データの作成
     DocumentReference _mainReference;
-    _mainReference = Firestore.instance.collection('borrow_info').document();//インスタンスを生成
+    _mainReference = Firestore.instance.collection('borrow_info').document();//データ登録のためのインスタンスを生成
+
+    bool deleteFlg = false; //削除ボタンの表示、非表示の判定
+
+    if(widget.document != null){//引数で渡したデータがあるかどうか
+      if(_data.user == null && _data.stuff == null){
+        _data.info = widget.document['info'];
+        _data.user = widget.document['user'];
+        _data.stuff = widget.document['stuff'];
+        _data.date = widget.document['date'];
+      }
+      _mainReference = Firestore.instance.collection('borrow_info').document(widget.document.documentID);
+
+      deleteFlg = true;
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -80,8 +104,11 @@ class _MyInputFormState extends State<InputForm>{
           ),
           IconButton(
               icon: Icon(Icons.delete),
-              onPressed: () {
+              //deletFlgがtrueなら処理を開始、falseならnullを返す（!が付いているため、本来とは逆になる）
+              onPressed: !deleteFlg ? null : () {//新規作成時には表示させない
                 print("削除完了");
+                _mainReference.delete(); //作成していたものを破棄
+                Navigator.pop(context); //リスト画面に戻る
               }
           ),
         ],
@@ -193,7 +220,7 @@ class _MyList extends State<List> {
                 (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
               if (!snapshot.hasData) return const Text('Loading...');//データローディング時
               return ListView.builder(
-                itemCount: snapshot.data.documents.length,
+                itemCount: snapshot.data.documents.length,//データ取得した際のアイテム数
                 padding: const EdgeInsets.only(top: 10.0),
                 itemBuilder: (context, index) =>
                     _buildListItem(context, snapshot.data.documents[index]),
@@ -208,7 +235,7 @@ class _MyList extends State<List> {
               context,
               MaterialPageRoute(
                   settings: const RouteSettings(name: "/new"),
-                  builder: (BuildContext context) => InputForm()
+                  builder: (BuildContext context) => InputForm(null)//データ編集の遷移と区別するためにnullを渡す
               ),
             );
           }
@@ -238,12 +265,19 @@ class _MyList extends State<List> {
                   child: const Text("編集"),
                   onPressed: () {
                     print("編集ボタンを押しました");
-                  },
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          settings: const RouteSettings(name: "/edit"),
+                          builder: (BuildContext context) => InputForm(document)//編集ボタンで選択されたデータを引数とする
+                        ),
+                    );
+                  }
                 ),
               ],
-            ),
+            )
           ),
-        ],
+        ]
       ),
     );
   }
